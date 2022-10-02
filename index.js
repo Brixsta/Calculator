@@ -33,11 +33,7 @@ window.onload = () => {
   const operators = {
     "+/-": null,
     "√": (a,b) => {
-
-      if(a === undefined) {
-        a = 1;
-      }
-        return a * Math.sqrt(b);
+          return a * Math.sqrt(b);
     },
     "%": (a)=> {
       return a/100;
@@ -171,12 +167,11 @@ window.onload = () => {
     } 
 
     if(current === '√' && !prev) {
-      let value = operators[current](prev,next);
+      let value = operators[current](1,next);
       arr[i] = value;
-      arr.splice(i-1,2);
+      arr.splice(i-1,1);
       i = 0;
     } 
-
    }
    return arr;
   }
