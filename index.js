@@ -1,6 +1,7 @@
 window.onload = () => {
   let screenInput = [];
-  const calc = document.querySelector(".calc-body");
+  let result = [];
+  const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
   const keys = [
     "+/-",
@@ -32,19 +33,25 @@ window.onload = () => {
     "+/-": null,
     "√": null,
     "%": null,
-    "÷": null,
+    "÷": (a,b)=>{
+      return a/b;
+    },
     'MRC': null,
     "M-": null,
     "M+": null,
-    'x': 'multiply',
+    'x': (a,b)=> {
+      return a * b;
+    },
     "-": (a, b) => {
       return a - b;
     },
-    "+": "plus sign",
+    "+": (a,b)=>{
+      return a+b;
+    },
     "=": "equals sign",
   };
 
-  // function to check for adjacent operators
+  // check for adjacent operators
   const noAdjacentOperators = (arr) => {
     let result = true;
     for (let i = 0; i < arr.length; i++) {
@@ -58,7 +65,7 @@ window.onload = () => {
     return result;
   };
 
-  // function to find num of Operators
+  // check to find num of Operators
   const findNumOfOperators = (arr) => {
     let count = 0;
     for (let i = 0; i < arr.length; i++) {
@@ -70,7 +77,7 @@ window.onload = () => {
   };
 
   // convert stringy nums to real nums
-  const numConverter = (arr) => {
+  const stringyNumsToRealNums = (arr) => {
     let newArr = [...arr];
     for (let i = 0; i < newArr.length; i++) {
       let current = arr[i];
@@ -82,10 +89,92 @@ window.onload = () => {
     return newArr;
   };
 
+  // group digits to form numbers
+  const groupDigits = (arr) => {
+    const result = [];
+    let digitBlock = '';
+    for(let i=0; i<arr.length; i++) {
+      let current = arr[i];
+
+      if(typeof current === 'number') {
+        digitBlock+= current;
+      }
+
+      if(typeof current !== 'number') {
+        result.push(Number(digitBlock));
+        result.push(current)
+        digitBlock = '';
+      }
+
+      if(typeof current === 'number' && i === arr.length-1) {
+        result.push(Number(digitBlock));
+        digitBlock = '';
+      }
+    }
+    return result;
+  }
+
+  // multiplyAndDivide array values
+  const multiplyAndDivide = (arr) => {
+    if(findNumOfOperators(arr) === 0) {
+      return arr;
+    } 
+
+   for(let i=0; i<arr.length; i++) {
+    let current = arr[i];
+    let prev = arr[i-1];
+    let next = arr[i+1];
+
+    if(current === 'x') {
+      let value = operators[current](prev,next);
+      arr[i+1] = value;
+      arr.splice(i-1,2);
+      i = 0;
+    } else if(current === '÷') {
+      let value = operators[current](prev,next);
+      arr[i+1] = value;
+      arr.splice(i-1,2);
+      i = 0;
+    } 
+   }
+   return arr;
+  }
+
+  // add and subtract array values
+  const addSubtractArray = (arr) => {
+    if(findNumOfOperators(arr) === 0) {
+      return arr;
+    } 
+
+   for(let i=0; i<arr.length; i++) {
+    let current = arr[i];
+    let prev = arr[i-1];
+    let next = arr[i+1];
+
+    if(current === '+') {
+      let value = operators[current](prev,next);
+      arr[i+1] = value;
+      arr.splice(i-1,2);
+      i = 0;
+    } else if(current === '-') {
+      let value = operators[current](prev,next);
+      arr[i+1] = value;
+      arr.splice(i-1,2);
+      i = 0;
+    } 
+   }
+
+   return arr;
+  }
+
   // function to calculate equation
   const findAnswer = (arr) => {
-    const numberedArr = numConverter(arr);
-    return numberedArr;
+    const numberedArr = stringyNumsToRealNums(arr);
+    const grouped = groupDigits(numberedArr);
+    const mAndDivide = multiplyAndDivide(grouped);
+    const addAndSubtract = addSubtractArray(mAndDivide);
+
+    return addAndSubtract[0];
   };
 
   // function to build the calculator
@@ -102,8 +191,7 @@ window.onload = () => {
         key.style.height = keyHeight + "px";
         key.style.width = keyWidth + "px";
         key.classList.add("key");
-        calc.append(key);
-
+        calcBody.append(key);
         key.innerHTML = keys[arrayIndex];
 
         // remove undefined key
@@ -152,10 +240,8 @@ window.onload = () => {
               displayedContent = "SYNTAX ERROR";
               screenContent = [];
             }
-
-            // console.log("equal sign prssed");
-            console.log(screenInput, displayedContent);
             console.log(answer);
+            result = [];
           }
           calcScreen.value = displayedContent;
         });
