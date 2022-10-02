@@ -4,36 +4,13 @@ window.onload = () => {
   let displayedContent;
   const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
-  const keys = [
-    "+/-",
-    "√",
-    "%",
-    "÷",
-    "MRC",
-    "M-",
-    "M+",
-    "x",
-    7,
-    8,
-    9,
-    "-",
-    4,
-    5,
-    6,
-    "+",
-    1,
-    2,
-    3,
-    "=",
-    "ON/C",
-    0,
-    ".",
-  ];
+
+  const keys = ['AC', '+/-', "%", "÷", 7, 8, 9, 'x', 4,5,6,'-',1,2,3,'+', 0, '.', '='];
   const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   const operators = {
-    "+/-": null,
-    "√": (a,b) => {
-          return a * Math.sqrt(b);
+    "AC": 'ac',
+    "+/-": (a)=> {
+      return a*-1;
     },
     "%": (a)=> {
       return a/100;
@@ -41,9 +18,6 @@ window.onload = () => {
     "÷": (a,b)=>{
       return a/b;
     },
-    'MRC': null,
-    "M-": null,
-    "M+": null,
     'x': (a,b)=> {
       return a * b;
     },
@@ -53,7 +27,7 @@ window.onload = () => {
     "+": (a,b)=>{
       return a+b;
     },
-    "=": "equals sign",
+    "=": "equals sign"
   };
 
   // modified operators does not include the % sign
@@ -64,6 +38,7 @@ window.onload = () => {
   const noAdjacentOperators = (arr) => {
     let result = true;
     for (let i = 0; i < arr.length; i++) {
+      let prev = arr[i-1];
       let current = arr[i];
       let next = arr[i + 1];
 
@@ -74,6 +49,9 @@ window.onload = () => {
         result = false;
       }
       if(current === "%" && next === "%") {
+        result = false;
+      }
+      if(operators[prev] && current === "%") {
         result = false;
       }
     }
@@ -141,40 +119,20 @@ window.onload = () => {
        arr[i+1] = value;
        arr.splice(i-1,2);
        i = 0;
+       console.log(`prev is: ${prev}, value is: ${value}`)
      } else if(current === '%' && numbers.includes(next)) {
       let value = operators[current](prev);
       arr[i+1] = value * next;
       arr.splice(i-1,2);
       i = 0;
+      console.log('oop')
     } 
+    
     }
-  
+    
+    console.log('percentage arr:', arr)
     return arr;
    }
-
-  // squareRoot array values
-  const squareRootArray = (arr) => {
-   for(let i=0; i<arr.length; i++) {
-    let current = arr[i];
-    let prev = arr[i-1];
-    let next = arr[i+1];
-
-    if(current === '√' && prev) {
-      let value = operators[current](prev,next);
-      arr[i+1] = value;
-      arr.splice(i-1,2);
-      i = 0;
-    } 
-
-    if(current === '√' && !prev) {
-      let value = operators[current](1,next);
-      arr[i] = value;
-      arr.splice(i-1,1);
-      i = 0;
-    } 
-   }
-   return arr;
-  }
 
   // multiplyAndDivide array values
   const multiplyAndDivideArray = (arr) => {
@@ -195,7 +153,7 @@ window.onload = () => {
       i = 0;
     } 
    }
-   
+   console.log('multiplydivide arr:', arr)
    return arr;
   }
 
@@ -227,8 +185,7 @@ window.onload = () => {
     const numberedArr = stringyNumsToRealNums(arr);
     const grouped = groupDigits(numberedArr);
     const applyPercentageSign = percentageSignArray(grouped);
-    const squareRooted = squareRootArray(applyPercentageSign);
-    const mAndDivide = multiplyAndDivideArray(squareRooted);
+    const mAndDivide = multiplyAndDivideArray(applyPercentageSign);
     const addAndSubtract = addSubtractArray(mAndDivide);
 
     return addAndSubtract[0];
@@ -238,7 +195,7 @@ window.onload = () => {
   const buildCalc = () => {
     const numOfCols = 4;
     const numOfRows = 6;
-    const keyHeight = 40;
+    const keyHeight = 60;
     const keyWidth = 60;
 
     for (let row = 0; row < numOfRows; row++) {
@@ -256,19 +213,31 @@ window.onload = () => {
           key.remove();
         }
 
-        // give number keys a white background and black text
-        if (typeof keys[arrayIndex] === "number") {
-          key.style.backgroundColor = "white";
+        // styling number keys
+        if (typeof keys[arrayIndex] === "number" || keys[arrayIndex] === '.') {
+          key.style.backgroundColor = "#313131";
+          key.style.color = "white";
+        }else if(keys[arrayIndex] ===  "÷" || keys[arrayIndex] ===  "x" || keys[arrayIndex] ===  "+" || keys[arrayIndex] ===  "-" || keys[arrayIndex] ===  "=") {
+          key.style.backgroundColor = "#f69906";
+          key.style.color = "white";
+        } else {
+          key.style.backgroundColor = "#9f9f9f";
           key.style.color = "black";
+        }
+
+        if(keys[arrayIndex] === 0) {
+          key.style.width = "128px";
+          key.style.borderRadius = "30px"
         }
 
         // event listener for key press
         key.addEventListener("click", () => {
+
+          // reset screen Font size
+          calcScreen.style.fontSize = "50px";
+
           // reset displayedContent on click
           oldDisplayedContent = displayedContent;
-          
-          // reset text align after equal sign is pressed
-          calcScreen.style.textAlign = "left";
 
           // make sure equal sign is not displayed when pressed
           if (key.innerHTML !== "=") {
@@ -278,7 +247,7 @@ window.onload = () => {
           displayedContent = screenInput.join().replace(/,/g, "");
           displayedContent = displayedContent.replace(/x/g, "*")
           // clear screen when on button is pressed
-          if (key.innerHTML === "ON/C") {
+          if (key.innerHTML === "AC") {
             displayedContent = "";
             screenInput = [];
           }
@@ -291,13 +260,9 @@ window.onload = () => {
             const answer = findAnswer(screenInput);
             const lastVal = screenInput[screenInput.length - 1];
 
-            // if num of Operators is 0 just return the number typed in
-            if (numOfOperators === 0) {
-              calcScreen.style.textAlign = "right";
-            }
-
             // if two or more operators are typed next to each other, display an error
             if (adjacentOperators || modifiedOperators[lastVal] || lastVal === "%" && screenInput.length === 1) {
+              calcScreen.style.fontSize = "30px";
               displayedContent = "SYNTAX ERROR";
               screenContent = [];
               calcScreen.value = displayedContent;
@@ -305,7 +270,6 @@ window.onload = () => {
             }
             console.log(answer);
             displayedContent = answer;
-            calcScreen.style.textAlign = "right";
             result = [];
           }
           calcScreen.value = displayedContent;
