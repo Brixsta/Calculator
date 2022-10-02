@@ -2,7 +2,6 @@ window.onload = () => {
   let screenInput = [];
   let oldDisplayedContent;
   let displayedContent;
-  let result = [];
   const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
   const keys = [
@@ -61,6 +60,10 @@ window.onload = () => {
     "=": "equals sign",
   };
 
+  // modified operators does not include the % sign
+  const modifiedOperators = {...operators};
+  delete modifiedOperators['%'];
+
   // check for adjacent operators
   const noAdjacentOperators = (arr) => {
     let result = true;
@@ -68,7 +71,13 @@ window.onload = () => {
       let current = arr[i];
       let next = arr[i + 1];
 
-      if (operators[current] && operators[next] && current !== '%' && next !== '%') {
+      if (modifiedOperators[current] && modifiedOperators[next]) {
+        result = false;
+      }
+      if(arr[arr.length-1] === "%" && arr[arr.length-2] === "%") {
+        result = false;
+      }
+      if(current === "%" && next === "%") {
         result = false;
       }
     }
@@ -260,16 +269,17 @@ window.onload = () => {
 
         // event listener for key press
         key.addEventListener("click", () => {
+          // reset displayedContent on click
+          oldDisplayedContent = displayedContent;
+          
           // reset text align after equal sign is pressed
           calcScreen.style.textAlign = "left";
-          // screenInput = oldDisplayedContent;
 
           // make sure equal sign is not displayed when pressed
           if (key.innerHTML !== "=") {
             screenInput.push(key.innerHTML);
           }
 
-          displayedContent = oldDisplayedContent;
           displayedContent = screenInput.join().replace(/,/g, "");
           displayedContent = displayedContent.replace(/x/g, "*")
           // clear screen when on button is pressed
@@ -279,6 +289,8 @@ window.onload = () => {
           }
 
           if (key.innerHTML === "=") {
+            oldDisplayedContent = displayedContent;
+            console.log(oldDisplayedContent)
             const adjacentOperators = !noAdjacentOperators(screenInput);
             const numOfOperators = findNumOfOperators(screenInput);
             const answer = findAnswer(screenInput);
@@ -290,12 +302,13 @@ window.onload = () => {
             }
 
             // if two or more operators are typed next to each other, display an error
-            if (adjacentOperators || Object.keys(operators).includes(lastVal)) {
+            if (adjacentOperators || modifiedOperators[lastVal] || lastVal === "%" && screenInput.length === 1) {
               displayedContent = "SYNTAX ERROR";
               screenContent = [];
+              calcScreen.value = displayedContent;
+              return;
             }
             console.log(answer);
-            oldDisplayedContent = displayedContent;
             displayedContent = answer;
             calcScreen.style.textAlign = "right";
             result = [];
