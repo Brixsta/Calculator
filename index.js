@@ -1,5 +1,7 @@
 window.onload = () => {
   let screenInput = [];
+  let oldDisplayedContent;
+  let displayedContent;
   let result = [];
   const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
@@ -31,8 +33,16 @@ window.onload = () => {
   const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   const operators = {
     "+/-": null,
-    "√": null,
-    "%": null,
+    "√": (a,b) => {
+
+      if(a === undefined) {
+        a = 1;
+      }
+        return a * Math.sqrt(b);
+    },
+    "%": (a)=> {
+      return a/100;
+    },
     "÷": (a,b)=>{
       return a/b;
     },
@@ -58,7 +68,7 @@ window.onload = () => {
       let current = arr[i];
       let next = arr[i + 1];
 
-      if (operators[current] && operators[next]) {
+      if (operators[current] && operators[next] && current !== '%' && next !== '%') {
         result = false;
       }
     }
@@ -114,12 +124,56 @@ window.onload = () => {
     return result;
   }
 
-  // multiplyAndDivide array values
-  const multiplyAndDivide = (arr) => {
-    if(findNumOfOperators(arr) === 0) {
-      return arr;
+  // percentage sign array values
+  const percentageSignArray = (arr) => {
+    for(let i=0; i<arr.length; i++) {
+     let current = arr[i];
+     let prev = arr[i-1];
+     let next = arr[i+1];
+ 
+     if(current === '%' && !next) {
+       let value = operators[current](prev);
+       arr[i+1] = value;
+       arr.splice(i-1,2);
+       i = 0;
+     } else if(current === '%' && numbers.includes(next)) {
+      let value = operators[current](prev);
+      arr[i+1] = value * next;
+      arr.splice(i-1,2);
+      i = 0;
+    } 
+    }
+  
+    return arr;
+   }
+
+  // squareRoot array values
+  const squareRootArray = (arr) => {
+   for(let i=0; i<arr.length; i++) {
+    let current = arr[i];
+    let prev = arr[i-1];
+    let next = arr[i+1];
+
+    if(current === '√' && prev) {
+      let value = operators[current](prev,next);
+      arr[i+1] = value;
+      arr.splice(i-1,2);
+      i = 0;
     } 
 
+    if(current === '√' && !prev) {
+      let value = operators[current](prev,next);
+      arr[i] = value;
+      arr.splice(i-1,2);
+      i = 0;
+    } 
+
+   }
+   return arr;
+  }
+
+  // multiplyAndDivide array values
+  const multiplyAndDivideArray = (arr) => {
    for(let i=0; i<arr.length; i++) {
     let current = arr[i];
     let prev = arr[i-1];
@@ -137,15 +191,12 @@ window.onload = () => {
       i = 0;
     } 
    }
+   
    return arr;
   }
 
   // add and subtract array values
   const addSubtractArray = (arr) => {
-    if(findNumOfOperators(arr) === 0) {
-      return arr;
-    } 
-
    for(let i=0; i<arr.length; i++) {
     let current = arr[i];
     let prev = arr[i-1];
@@ -171,7 +222,9 @@ window.onload = () => {
   const findAnswer = (arr) => {
     const numberedArr = stringyNumsToRealNums(arr);
     const grouped = groupDigits(numberedArr);
-    const mAndDivide = multiplyAndDivide(grouped);
+    const applyPercentageSign = percentageSignArray(grouped);
+    const squareRooted = squareRootArray(applyPercentageSign);
+    const mAndDivide = multiplyAndDivideArray(squareRooted);
     const addAndSubtract = addSubtractArray(mAndDivide);
 
     return addAndSubtract[0];
@@ -209,15 +262,16 @@ window.onload = () => {
         key.addEventListener("click", () => {
           // reset text align after equal sign is pressed
           calcScreen.style.textAlign = "left";
+          // screenInput = oldDisplayedContent;
 
           // make sure equal sign is not displayed when pressed
           if (key.innerHTML !== "=") {
             screenInput.push(key.innerHTML);
           }
 
-          let displayedContent;
+          displayedContent = oldDisplayedContent;
           displayedContent = screenInput.join().replace(/,/g, "");
-
+          displayedContent = displayedContent.replace(/x/g, "*")
           // clear screen when on button is pressed
           if (key.innerHTML === "ON/C") {
             displayedContent = "";
@@ -241,6 +295,9 @@ window.onload = () => {
               screenContent = [];
             }
             console.log(answer);
+            oldDisplayedContent = displayedContent;
+            displayedContent = answer;
+            calcScreen.style.textAlign = "right";
             result = [];
           }
           calcScreen.value = displayedContent;
