@@ -55,7 +55,6 @@ window.onload = () => {
       if(current === '.' && next === '.') {
         result = false;
       }
-
       if(arr[0] === 'x' && typeof Number(arr[1]) === 'number') {
         return false;
       }
@@ -71,8 +70,12 @@ window.onload = () => {
       if(arr[0] === "÷" && typeof Number(arr[1]) === 'number') {
         return false;
       }
-
-    
+      if(arr[0] === "+/-" && typeof Number(arr[1]) === 'number') {
+        return false;
+      }
+      if(arr.length === 1 && arr[0] === '.') {
+        return false;
+      }
     }
     return result;
   };
@@ -97,15 +100,19 @@ window.onload = () => {
     let digitBlock = '';
     for(let i=0; i<arr.length; i++) {
       let current = arr[i];
+      let prev = arr[i-1];
 
       if(typeof current === 'number') {
         digitBlock+= current;
       }
 
-      if(current === '.') {
+      if(current === '.' && !prev) {
+        console.log('here')
+        digitBlock += '0' + current;
+      } else if (current === '.') {
         digitBlock+= current;
       }
-
+      
       if(typeof current !== 'number') {
         result.push(Number(digitBlock));
         result.push(current)
@@ -121,6 +128,7 @@ window.onload = () => {
     return result;
   }
 
+  // deal with decimals
   const applyDecimals = (arr) => {
     for(let i=0; i<arr.length; i++) {
       let current = arr[i];
@@ -131,6 +139,13 @@ window.onload = () => {
         arr[i+1] = combined;
         arr.splice(i-1,2)
       }
+      // } else if (current === '.' && !prev && typeof next === 'number') {
+      //   let combined = Number(current + next + '');
+      //   arr[i+1] = combined;
+      //   arr.splice(i,1);
+      //   console.log('combined: ', combined);
+      //   console.log('arr', arr)
+      // }
     }
     console.log('apply Decimals',arr)
     return arr;
