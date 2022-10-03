@@ -1,7 +1,6 @@
 window.onload = () => {
   let screenInput = [];
   let displayedContent;
-  let lastEquationValue;
   const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
   const keys = ['AC', '+/-', "%", "÷", 7, 8, 9, 'x', 4,5,6,'-',1,2,3,'+', 0, '.', '='];
@@ -56,6 +55,24 @@ window.onload = () => {
       if(current === '.' && next === '.') {
         result = false;
       }
+
+      if(arr[0] === 'x' && typeof Number(arr[1]) === 'number') {
+        return false;
+      }
+      if(arr[0] === '-' && typeof Number(arr[1]) === 'number') {
+        return false;
+      }
+      if(arr[0] === '+' && typeof Number(arr[1]) === 'number') {
+        return false;
+      }
+      if(arr[0] === '%' && typeof Number(arr[1]) === 'number') {
+        return false;
+      }
+      if(arr[0] === "÷" && typeof Number(arr[1]) === 'number') {
+        return false;
+      }
+
+    
     }
     return result;
   };
