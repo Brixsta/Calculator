@@ -42,7 +42,6 @@ window.onload = () => {
       let next = arr[i + 1];
 
       if (modifiedOperators[current] && modifiedOperators[next] && next !== '-') {
-        console.log('this error')
         result = false;
       }
       if(arr[arr.length-1] === "%" && arr[arr.length-2] === "%") {
@@ -92,7 +91,6 @@ window.onload = () => {
         newArr[i] = Number(newArr[i]);
       }
     }
-    console.log('stringyNumsToRealNums:', newArr)
     return newArr;
   };
 
@@ -114,13 +112,11 @@ window.onload = () => {
         arr[i+1] = combined;
         arr.splice(i,1)
       } else if (current === '-' && typeof next === 'number' && typeof prev !== 'number' && prev !== '.') {
-        console.log('me boyz')
         let combined = Number(current + next + "");
         arr[i+1] = combined;
         arr.splice(i,1);
       } 
     }
-    console.log('deal with negs', arr)
     return arr;
   }
 
@@ -156,7 +152,6 @@ window.onload = () => {
         digitBlock = '';
       }
     }
-    console.log(  'group digits: ', result)
     return result;
   }
 
@@ -172,7 +167,6 @@ window.onload = () => {
         arr.splice(i-1,2)
       }
     }
-    console.log('apply Decimals',arr)
     return arr;
   }
 
@@ -196,8 +190,6 @@ window.onload = () => {
     } 
     
     }
-    
-    console.log('percentage arr:', arr)
     return arr;
    }
 
@@ -220,7 +212,6 @@ window.onload = () => {
       i = 0;
     } 
    }
-   console.log('multiplydivide arr:', arr)
    return arr;
   }
 
@@ -250,8 +241,6 @@ window.onload = () => {
 
   // function to calculate equation
   const findAnswer = (arr) => {
-    console.log('first: ', arr);
-    
     const numberedArr = stringyNumsToRealNums(arr);
     const dealWithNegs = dealWithNegativeNums(numberedArr)
     const groupArr = groupDigits(dealWithNegs);
@@ -327,8 +316,6 @@ window.onload = () => {
             if(answer) {
               screenInput[0] = screenInput[0] * -1;
               answer = answer *= -1;  
-              console.log('screen Input', screenInput)
-              console.log('answer', answer)
             }
           }
 
@@ -342,6 +329,11 @@ window.onload = () => {
           }
 
           if (key.innerHTML === "=") {
+            if(!displayedContent) {
+              return;
+            }
+
+
             const syntaxErrorCheck = !checkForSyntaxErrors(screenInput);
             answer = findAnswer(screenInput);
             const lastVal = screenInput[screenInput.length - 1];
