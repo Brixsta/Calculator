@@ -1,6 +1,7 @@
 window.onload = () => {
   let screenInput = [];
   let displayedContent;
+  let answer;
   const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
   const keys = ['AC', '+/-', "%", "÷", 7, 8, 9, 'x', 4,5,6,'-',1,2,3,'+', 0, '.', '='];
@@ -40,7 +41,8 @@ window.onload = () => {
       let current = arr[i];
       let next = arr[i + 1];
 
-      if (modifiedOperators[current] && modifiedOperators[next]) {
+      if (modifiedOperators[current] && modifiedOperators[next] && next !== '-') {
+        console.log('this error')
         result = false;
       }
       if(arr[arr.length-1] === "%" && arr[arr.length-2] === "%") {
@@ -55,10 +57,10 @@ window.onload = () => {
       if(current === '.' && next === '.') {
         result = false;
       }
-      if(arr[0] === 'x' && typeof Number(arr[1]) === 'number') {
-        return false;
+      if(current === '-' && next === '-') {
+        result = false;
       }
-      if(arr[0] === '-' && typeof Number(arr[1]) === 'number') {
+      if(arr[0] === 'x' && typeof Number(arr[1]) === 'number') {
         return false;
       }
       if(arr[0] === '+' && typeof Number(arr[1]) === 'number') {
@@ -90,9 +92,37 @@ window.onload = () => {
         newArr[i] = Number(newArr[i]);
       }
     }
-    console.log('stringyNumsToRealNums:', arr)
+    console.log('stringyNumsToRealNums:', newArr)
     return newArr;
   };
+
+  // deal with Negative Numbers 
+  const dealWithNegativeNums = (arr) => {
+    
+    for(let i=0; i<arr.length; i++) {
+      let current = arr[i];
+      let prev = arr[i-1];
+      let next = arr[i+1];
+      let future = arr[i+2];
+
+       if (current === '-' && next === '.' && typeof future === 'number') {
+        let combined = Number(current + next + future + '');
+        arr[i+2] = combined;
+        arr.splice(i,2)
+      } else if(current === '-' && !prev) {
+        let combined = Number(current + next + "");
+        arr[i+1] = combined;
+        arr.splice(i,1)
+      } else if (current === '-' && typeof next === 'number' && typeof prev !== 'number' && prev !== '.') {
+        console.log('me boyz')
+        let combined = Number(current + next + "");
+        arr[i+1] = combined;
+        arr.splice(i,1);
+      } 
+    }
+    console.log('deal with negs', arr)
+    return arr;
+  }
 
   // group digits to form numbers
   const groupDigits = (arr) => {
@@ -101,6 +131,7 @@ window.onload = () => {
     for(let i=0; i<arr.length; i++) {
       let current = arr[i];
       let prev = arr[i-1];
+      let next = arr[i+1];
 
       if(typeof current === 'number') {
         digitBlock+= current;
@@ -140,13 +171,6 @@ window.onload = () => {
         arr[i+1] = combined;
         arr.splice(i-1,2)
       }
-      // } else if (current === '.' && !prev && typeof next === 'number') {
-      //   let combined = Number(current + next + '');
-      //   arr[i+1] = combined;
-      //   arr.splice(i,1);
-      //   console.log('combined: ', combined);
-      //   console.log('arr', arr)
-      // }
     }
     console.log('apply Decimals',arr)
     return arr;
@@ -164,7 +188,6 @@ window.onload = () => {
        arr[i+1] = value;
        arr.splice(i-1,2);
        i = 0;
-       console.log(`prev is: ${prev}, value is: ${value}`)
      } else if(current === '%' && numbers.includes(next)) {
       let value = operators[current](prev);
       arr[i+1] = value * next;
@@ -230,7 +253,8 @@ window.onload = () => {
     console.log('first: ', arr);
     
     const numberedArr = stringyNumsToRealNums(arr);
-    const groupArr = groupDigits(numberedArr);
+    const dealWithNegs = dealWithNegativeNums(numberedArr)
+    const groupArr = groupDigits(dealWithNegs);
     const decimalArr = applyDecimals(groupArr)
     const percentageSignArr = percentageSignArray(decimalArr);
     const mAndDivide = multiplyAndDivideArray(percentageSignArr);
@@ -285,12 +309,32 @@ window.onload = () => {
           calcScreen.style.fontSize = "50px";
 
           // make sure equal sign is not displayed when pressed
-          if (key.innerHTML !== "=") {
+          if (key.innerHTML !== "=" && key.innerHTML !== '+/-') {
             screenInput.push(key.innerHTML);
+          }
+
+          if(key.innerHTML === '+/-') {
+
+
+            // no answer present when +/- is pressed
+            if(!answer && screenInput[0] !== '-') {
+              screenInput.unshift('-')
+            } else if (!answer && screenInput[0] === '-') {
+              screenInput.shift();
+            }
+
+            // answer is present when +/- is pressed
+            if(answer) {
+              screenInput[0] = screenInput[0] * -1;
+              answer = answer *= -1;  
+              console.log('screen Input', screenInput)
+              console.log('answer', answer)
+            }
           }
 
           displayedContent = screenInput.join().replace(/,/g, "");
           displayedContent = displayedContent.replace(/x/g, "*")
+
           // clear screen when on button is pressed
           if (key.innerHTML === "AC") {
             displayedContent = "";
@@ -299,7 +343,7 @@ window.onload = () => {
 
           if (key.innerHTML === "=") {
             const syntaxErrorCheck = !checkForSyntaxErrors(screenInput);
-            let answer = findAnswer(screenInput);
+            answer = findAnswer(screenInput);
             const lastVal = screenInput[screenInput.length - 1];
 
             // if two or more operators are typed next to each other, display an error
