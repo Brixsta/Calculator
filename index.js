@@ -107,8 +107,9 @@ window.onload = () => {
       }
 
       if(current === '.' && !prev) {
-        console.log('here')
         digitBlock += '0' + current;
+      } else if (current === '.' && typeof prev !== 'number') {
+        digitBlock+= '0' + current;
       } else if (current === '.') {
         digitBlock+= current;
       }
