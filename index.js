@@ -1,10 +1,9 @@
 window.onload = () => {
   let screenInput = [];
-  let oldDisplayedContent;
   let displayedContent;
+  let lastEquationValue;
   const calcBody = document.querySelector(".calc-body");
   const calcScreen = document.querySelector(".calc-screen");
-
   const keys = ['AC', '+/-', "%", "÷", 7, 8, 9, 'x', 4,5,6,'-',1,2,3,'+', 0, '.', '='];
   const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   const operators = {
@@ -34,8 +33,8 @@ window.onload = () => {
   const modifiedOperators = {...operators};
   delete modifiedOperators['%'];
 
-  // check for adjacent operators
-  const noAdjacentOperators = (arr) => {
+  // check for syntax errors
+  const checkForSyntaxErrors = (arr) => {
     let result = true;
     for (let i = 0; i < arr.length; i++) {
       let prev = arr[i-1];
@@ -54,19 +53,11 @@ window.onload = () => {
       if(operators[prev] && current === "%") {
         result = false;
       }
-    }
-    return result;
-  };
-
-  // check to find num of Operators
-  const findNumOfOperators = (arr) => {
-    let count = 0;
-    for (let i = 0; i < arr.length; i++) {
-      if (operators[arr[i]]) {
-        count++;
+      if(current === '.' && next === '.') {
+        result = false;
       }
     }
-    return count;
+    return result;
   };
 
   // convert stringy nums to real nums
@@ -79,6 +70,7 @@ window.onload = () => {
         newArr[i] = Number(newArr[i]);
       }
     }
+    console.log('stringyNumsToRealNums:', arr)
     return newArr;
   };
 
@@ -93,6 +85,10 @@ window.onload = () => {
         digitBlock+= current;
       }
 
+      if(current === '.') {
+        digitBlock+= current;
+      }
+
       if(typeof current !== 'number') {
         result.push(Number(digitBlock));
         result.push(current)
@@ -104,7 +100,23 @@ window.onload = () => {
         digitBlock = '';
       }
     }
+    console.log(  'group digits: ', result)
     return result;
+  }
+
+  const applyDecimals = (arr) => {
+    for(let i=0; i<arr.length; i++) {
+      let current = arr[i];
+      let prev = arr[i-1];
+      let next = arr[i+1];
+      if(current === '.' && typeof prev === 'number' && typeof next === 'number') {
+        let combined = Number(prev + current + next + '');
+        arr[i+1] = combined;
+        arr.splice(i-1,2)
+      }
+    }
+    console.log('apply Decimals',arr)
+    return arr;
   }
 
   // percentage sign array values
@@ -125,7 +137,6 @@ window.onload = () => {
       arr[i+1] = value * next;
       arr.splice(i-1,2);
       i = 0;
-      console.log('oop')
     } 
     
     }
@@ -180,12 +191,16 @@ window.onload = () => {
    return arr;
   }
 
+
   // function to calculate equation
   const findAnswer = (arr) => {
+    console.log('first: ', arr);
+    
     const numberedArr = stringyNumsToRealNums(arr);
-    const grouped = groupDigits(numberedArr);
-    const applyPercentageSign = percentageSignArray(grouped);
-    const mAndDivide = multiplyAndDivideArray(applyPercentageSign);
+    const groupArr = groupDigits(numberedArr);
+    const decimalArr = applyDecimals(groupArr)
+    const percentageSignArr = percentageSignArray(decimalArr);
+    const mAndDivide = multiplyAndDivideArray(percentageSignArr);
     const addAndSubtract = addSubtractArray(mAndDivide);
 
     return addAndSubtract[0];
@@ -236,9 +251,6 @@ window.onload = () => {
           // reset screen Font size
           calcScreen.style.fontSize = "50px";
 
-          // reset displayedContent on click
-          oldDisplayedContent = displayedContent;
-
           // make sure equal sign is not displayed when pressed
           if (key.innerHTML !== "=") {
             screenInput.push(key.innerHTML);
@@ -253,26 +265,22 @@ window.onload = () => {
           }
 
           if (key.innerHTML === "=") {
-            oldDisplayedContent = displayedContent;
-            console.log(oldDisplayedContent)
-            const adjacentOperators = !noAdjacentOperators(screenInput);
-            const numOfOperators = findNumOfOperators(screenInput);
-            const answer = findAnswer(screenInput);
+            const syntaxErrorCheck = !checkForSyntaxErrors(screenInput);
+            let answer = findAnswer(screenInput);
             const lastVal = screenInput[screenInput.length - 1];
 
             // if two or more operators are typed next to each other, display an error
-            if (adjacentOperators || modifiedOperators[lastVal] || lastVal === "%" && screenInput.length === 1) {
+            if (syntaxErrorCheck || modifiedOperators[lastVal] || lastVal === "%" && screenInput.length === 1) {
               calcScreen.style.fontSize = "30px";
               displayedContent = "SYNTAX ERROR";
               screenContent = [];
               calcScreen.value = displayedContent;
               return;
             }
-            console.log(answer);
             displayedContent = answer;
-            result = [];
+            screenInput = [answer]
           }
-          calcScreen.value = displayedContent;
+            calcScreen.value = displayedContent;
         });
       }
     }
